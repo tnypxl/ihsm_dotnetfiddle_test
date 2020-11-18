@@ -14,4 +14,8 @@
     <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="86.0.4240.2200" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\DotNetFiddle.PageObjects\DotNetFiddle.PageObjects.csproj" />
+  </ItemGroup>
+
 </Project>

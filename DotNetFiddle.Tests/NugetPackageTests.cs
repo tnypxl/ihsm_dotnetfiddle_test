@@ -1,72 +1,42 @@
-using System;
 using NUnit.Framework;
-using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Interactions;
-using OpenQA.Selenium.Support.UI;
+using DotNetFiddle.PageObjects;
+using System;
 
 namespace DotNetFiddle.Tests
 {
     public class NugetPackageTests
     {
-        private IWebDriver _driver;
-
-        public IWebDriver Driver => _driver ?? throw new NullReferenceException("_driver is null");
-
-        #region Page Elements
-
-        public IWebElement NugetSearchField => Locate(By.CssSelector("input[type='search'].new-package"));
-
-        public IWebElement NugetPackage(string name) => Locate(By.XPath($"//a[@package-id='{name}']"));
-
-        public IWebElement NugetPackageVersion(string version) => Locate(By.XPath($"//a[@version-name='{version}']"));
-
-        public IWebElement InstalledNugetPackage(string name) => Locate(By.XPath($"//div[@class='package-name' and @package-id='{name}']"));
-
-        #endregion Page Elements
+        [ThreadStatic] public static MainPage MainPage;
 
         [SetUp]
         public void Setup()
         {
-            _driver = new ChromeDriver();
-            Driver.Navigate().GoToUrl("https://dotnetfiddle.net");
+            DriverFactory.Build("chrome");
+            MainPage = new MainPage();
+            MainPage.Navigate();
+        }
+
+        [Test]
+        public void ShouldRunScriptAndReturnHelloWorld()
+        {
+            MainPage.RunButton.Click();
+            Assert.True(MainPage.OutputHasText("Hello World"));
         }
 
         [Test]
         public void ShouldAddPackages()
         {
-            NugetSearchField.Click();
-            NugetSearchField.SendKeys("nunit");
-            HoverElement(NugetPackage("NUnit"));
-            NugetPackageVersion("3.12.0.0").Click();
-            Assert.True(InstalledNugetPackage("NUnit").Displayed);
+            MainPage.SearchNugetPackages("nunit");
+            MainPage.SelectNugetPackage("NUnit", "3.12.0");
+
+            Assert.True(MainPage.NugetIsInstalled("NUnit"));
         }
 
         [TearDown]
         public void Teardown()
         {
-            Driver.Close();
-            Driver?.Quit();
-        }
-
-        public void HoverElement(IWebElement element)
-        {
-            var action = new Actions(Driver);
-            action.MoveToElement(element).Perform();
-        }
-
-        public IWebElement Locate(By by)
-        {
-            var wait = new DefaultWait<IWebDriver>(Driver)
-            {
-                Timeout = TimeSpan.FromSeconds(10),
-            };
-
-            wait.IgnoreExceptionTypes(
-                typeof(NoSuchElementException),
-                typeof(StaleElementReferenceException));
-
-            return wait.Until(_ => Driver.FindElement(by));
+            DriverFactory.Instance.Close();
+            DriverFactory.Instance?.Quit();
         }
     }
 }
